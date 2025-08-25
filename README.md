@@ -2,6 +2,8 @@
 
 A modern, interactive PDF chat application that allows users to upload PDF documents and have intelligent conversations about their content using Google's Gemini AI. Built with React frontend and Node.js backend.
 
+🌐 **Live Demo**: [https://pdf-chat-gold.vercel.app/](https://pdf-chat-gold.vercel.app/)
+
 ![PDF Chat App](https://img.shields.io/badge/React-18.x-blue) ![Node.js](https://img.shields.io/badge/Node.js-18.x-green) ![Google Gemini](https://img.shields.io/badge/Google-Gemini%20AI-orange)
 
 ## ✨ Features
@@ -93,6 +95,11 @@ PDF_Chat/
    ```
    Frontend will run on: http://localhost:5173
 
+## 🌐 Live Application
+
+**Frontend**: [https://pdf-chat-gold.vercel.app/](https://pdf-chat-gold.vercel.app/)
+**Backend API**: [https://pdfchat-server.vercel.app/](https://pdfchat-server.vercel.app/)
+
 ## 📖 Usage Instructions
 
 1. **Upload a PDF**
@@ -128,18 +135,21 @@ PDF_Chat/
 
 ## 🔧 API Endpoints
 
-### Backend Server (http://localhost:5000)
+### Backend Server
+
+**Production**: [https://pdfchat-server.vercel.app/](https://pdfchat-server.vercel.app/)
+**Local Development**: http://localhost:5000
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/upload` | Upload PDF file and extract text |
 | POST | `/chat` | Send question and get AI response |
+| GET | `/health` | Server health check |
 
-### Frontend Development Server
+### Frontend Application
 
-| URL | Description |
-|-----|-------------|
-| http://localhost:5173 | Main application interface |
+**Production**: [https://pdf-chat-gold.vercel.app/](https://pdf-chat-gold.vercel.app/)
+**Local Development**: http://localhost:5173
 
 ## 🎨 Key Components
 
@@ -156,43 +166,30 @@ PDF_Chat/
 
 ## 🚀 Deployment
 
-### Frontend Deployment
-The frontend can be deployed to platforms like:
-- **[Vercel](https://vercel.com/)** - Recommended for React apps
-- **[Netlify](https://netlify.com/)** - Easy static site deployment
-- **[GitHub Pages](https://pages.github.com/)** - Free hosting
+### Live Deployment
 
-### Backend Deployment
-The backend can be deployed to:
-- **[Railway](https://railway.app/)** - Simple Node.js deployment
-- **[Render](https://render.com/)** - Free tier available
-- **[Heroku](https://heroku.com/)** - Popular platform-as-a-service
+✅ **Frontend**: Deployed on [Vercel](https://vercel.com/)
+- **URL**: [https://pdf-chat-gold.vercel.app/](https://pdf-chat-gold.vercel.app/)
+- **Status**: Production Ready
 
-## 🤝 Contributing
+✅ **Backend**: Deployed on [Vercel](https://vercel.com/)
+- **URL**: [https://pdfchat-server.vercel.app/](https://pdfchat-server.vercel.app/)
+- **Status**: Production Ready
+- **Health Check**: [https://pdfchat-server.vercel.app/health](https://pdfchat-server.vercel.app/health)
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### Deployment Instructions
 
-## 📝 License
+#### Frontend Deployment (Vercel)
+```bash
+cd client
+vercel --prod
+```
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Google Gemini AI](https://ai.google.dev/) for powerful AI capabilities
-- [React PDF](https://github.com/wojtekmaj/react-pdf) for PDF rendering
-- [Lucide](https://lucide.dev/) for beautiful icons
-- [Tailwind CSS](https://tailwindcss.com/) for styling utilities
-
-## 📞 Support
-
-If you have any questions or run into issues, please:
-- Open an issue on [GitHub](https://github.com/sravanr788/PDF_Chat/issues)
-- Check the documentation above
-- Ensure all dependencies are properly installed
+#### Backend Deployment (Vercel)
+```bash
+cd server
+vercel --prod
+```
 
 ---
 

@@ -1,80 +1,119 @@
 import express from "express";
-import multer from "multer";
-import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import pdf from "pdf-extraction";
+import axios from "axios";
+import pdfExtract from "pdf-extraction";
 
 dotenv.config();
 
 const app = express();
-const upload = multer();
-app.use(cors());
-app.use(bodyParser.json());
+
+// Simplified CORS configuration
+app.use(cors({
+  origin: true,
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 200
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// store pdf text in memory
-let pdfText = "";
 
-// upload PDF
-app.post("/upload", upload.single("file"), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-
-    if (req.file.mimetype !== "application/pdf") {
-      return res.status(400).json({ error: "Only PDF files allowed" });
-    }
-
-    // extract text using pdf-extraction
-    const data = await pdf(req.file.buffer);
-    pdfText = data.text;
-
-    res.json({ success: true, message: "PDF processed successfully" });
-  } catch (error) {
-    console.error("Error parsing PDF:", error);
-    res.status(500).json({ error: "Failed to process PDF" });
-  }
+app.get("/", (req, res) => {
+  res.json({
+    message: "PDF Chat Server is running!",
+    status: "healthy",
+    timestamp: new Date().toISOString()
+  });
 });
 
-// chat with PDF
+// Health check
+app.get("/health", (req, res) => {
+  res.json({
+    status: "healthy",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Fetch remote PDF file and extract text
+async function fetchPdfText(url) {
+  const response = await axios.get(url, { responseType: "arraybuffer" });
+  const dataBuffer = Buffer.from(response.data);
+
+  const data = await pdfExtract(dataBuffer);
+  console.log("PDF Extract Result:", Object.keys(data));
+
+  // Some libs give 'text', some give 'pages'
+  let text = "";
+  if (data.text) {
+    text = data.text;
+  } else if (data.pages) {
+    text = data.pages.map(p => p.text).join(" ");
+  } else {
+    throw new Error("No text found in PDF");
+  }
+
+  return text;
+}
+
 app.post("/chat", async (req, res) => {
   try {
-    const { question } = req.body;
-      if (!question) return res.status(400).json({ error: "No question provided" });
-    
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const { fileUrl, question } = req.body;
+    if (!fileUrl || !question) {
+      return res.status(400).json({ error: "fileUrl and question are required" });
+    }
 
-    if (!pdfText) return res.status(400).json({ error: "No PDF uploaded yet" });
+    console.log("Fetching PDF from URL:", fileUrl);
+    const pdfText = await fetchPdfText(fileUrl);
+
+    // Split into pseudo-pages (every 500 words = 1 "page")
+    const words = pdfText.split(/\s+/);
+    const pdfPages = [];
+    const wordsPerPage = 500;
+
+    for (let i = 0; i < words.length; i += wordsPerPage) {
+      const pageText = words.slice(i, i + wordsPerPage).join(" ");
+      pdfPages.push({
+        pageNumber: Math.floor(i / wordsPerPage) + 1,
+        text: pageText
+      });
+    }
 
     const prompt = `
- "You are an AI assistant that answers questions based on the provided PDF. " +
-        "If the answer cannot be found in the context but is about a general educational topic " +
-        "(like explaining a concept, technology, or methodology), you can provide a helpful educational " +
-        "response, but clearly indicate that you're sharing general knowledge rather than information " +
-        "from the user's documents. " +
-        "For questions that require specific information from documents that isn't available, " +
-        "politely say that you don't know based on the available information, then suggest where the user might find this information elsewhere. " +
-        "Be tolerant of typos and unclear phrasing - try to understand what the user meant even if there are mistakes. " +
-        "If you recognize a typo or ambiguous reference, respond to what you believe the user intended to ask. " +
-        "Answer like a helpful human would."
+You are an AI assistant that answers questions based on the provided PDF.
 
-PDF Content (truncated to 4000 chars):
-${pdfText.slice(0, 4000)}
+IMPORTANT: Always cite in [Page X] format.
+
+PDF Content:
+${pdfPages.map(p => `\n--- PAGE ${p.pageNumber} ---\n${p.text}`).join("\n").slice(0, 6000)}
 
 Question: ${question}
-    `;
+`;
 
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
-    res.json({ answer: result.response.text() });
-  } catch (error) {
-    console.error("Error chatting with PDF:", error);
+    const answer = result.response.text();
+
+    res.json({
+      answer,
+      totalPages: pdfPages.length
+    });
+  } catch (err) {
+    console.error("Error chatting with PDF:", err);
     res.status(500).json({ error: "Failed to chat with PDF" });
   }
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () =>
-  console.log(`🚀 Server running at http://localhost:${PORT}`)
-);
+
+
+if (process.env.NODE_ENV !== "production") {
+  app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+}
+
+export default app;
