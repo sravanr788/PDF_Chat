@@ -7,13 +7,8 @@ import {
   Brain, 
   Shield, 
   Sparkles,
-  Users,
-  TrendingUp,
-  Clock,
-  Star,
   ChevronDown,
   Play,
-  CheckCircle,
   Globe,
   Cpu,
   Database

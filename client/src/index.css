@@ -10,11 +10,6 @@
     animation-delay: 4s;
   }
   
-  /* Hide scrollbar for WebKit browsers */
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  
   @keyframes float {
     0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-20px); }

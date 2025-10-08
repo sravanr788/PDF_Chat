@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import axios from "axios";
 import pdfExtract from "pdf-extraction";
 
@@ -9,7 +9,6 @@ dotenv.config();
 
 const app = express();
 
-// Simplified CORS configuration
 app.use(cors({
   origin: true,
   credentials: false,
@@ -21,22 +20,13 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 
 app.get("/", (req, res) => {
   res.json({
     message: "PDF Chat Server is running!",
     status: "healthy",
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Health check
-app.get("/health", (req, res) => {
-  res.json({
-    status: "healthy",
-    uptime: process.uptime(),
     timestamp: new Date().toISOString()
   });
 });
@@ -49,7 +39,6 @@ async function fetchPdfText(url) {
   const data = await pdfExtract(dataBuffer);
   console.log("PDF Extract Result:", Object.keys(data));
 
-  // Some libs give 'text', some give 'pages'
   let text = "";
   if (data.text) {
     text = data.text;
@@ -72,7 +61,6 @@ app.post("/chat", async (req, res) => {
     console.log("Fetching PDF from URL:", fileUrl);
     const pdfText = await fetchPdfText(fileUrl);
 
-    // Split into pseudo-pages (every 500 words = 1 "page")
     const words = pdfText.split(/\s+/);
     const pdfPages = [];
     const wordsPerPage = 500;
@@ -96,10 +84,12 @@ ${pdfPages.map(p => `\n--- PAGE ${p.pageNumber} ---\n${p.text}`).join("\n").slic
 Question: ${question}
 `;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent(prompt);
-    const answer = result.response.text();
-
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.0-flash-001',
+      contents: 'Why is the sky blue?',
+    });
+    const answer = response.text;
+    console.log(answer);
     res.json({
       answer,
       totalPages: pdfPages.length

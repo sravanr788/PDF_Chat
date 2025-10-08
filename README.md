@@ -131,7 +131,6 @@ PDF_Chat/
 - **[Google Gemini AI](https://ai.google.dev/)** - AI chat responses
 - **[pdf-extraction](https://www.npmjs.com/package/pdf-extraction)** - PDF text extraction
 - **[Multer](https://github.com/expressjs/multer)** - File upload handling
-- **[CORS](https://github.com/expressjs/cors)** - Cross-origin resource sharing
 
 ## 🔧 API Endpoints
 
@@ -144,7 +143,6 @@ PDF_Chat/
 |--------|----------|-------------|
 | POST | `/upload` | Upload PDF file and extract text |
 | POST | `/chat` | Send question and get AI response |
-| GET | `/health` | Server health check |
 
 ### Frontend Application
 
@@ -166,16 +164,10 @@ PDF_Chat/
 
 ## 🚀 Deployment
 
-### Live Deployment
-
-✅ **Frontend**: Deployed on [Vercel](https://vercel.com/)
+✅ Deployed on [Vercel](https://vercel.com/)
 - **URL**: [https://pdf-chat-gold.vercel.app/](https://pdf-chat-gold.vercel.app/)
 - **Status**: Production Ready
 
-✅ **Backend**: Deployed on [Vercel](https://vercel.com/)
-- **URL**: [https://pdfchat-server.vercel.app/](https://pdfchat-server.vercel.app/)
-- **Status**: Production Ready
-- **Health Check**: [https://pdfchat-server.vercel.app/health](https://pdfchat-server.vercel.app/health)
 
 ### Deployment Instructions
 
