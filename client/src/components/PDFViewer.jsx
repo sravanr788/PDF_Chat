@@ -1,130 +1,118 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+// PDFViewer.jsx
+import React, { useEffect } from 'react';
+import { Document, Page } from "react-pdf";
+import { ChevronUp, ChevronDown } from "lucide-react";
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
 
-const PDFViewer = ({ file, currentPage, onPageChange }) => {
-  const [zoom, setZoom] = useState(100);
-  const [rotation, setRotation] = useState(0);
-  const totalPages = 5; // Mock total pages
+const PDFViewer = ({
+  file,
+  chatWidth,
+  numPages,
+  currentPage,
+  scale,
+  pdfViewerRef,
+  onDocumentLoadSuccess,
+  navigateToPage,
+  setScale,
+}) => {
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 25, 200));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 25, 50));
-  const handleRotate = () => setRotation(prev => (prev + 90) % 360);
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      onPageChange(currentPage - 1);
-    }
+  // Simple function to change scale up/down
+  const handleZoom = (change) => {
+    setScale(prevScale => Math.min(2.0, Math.max(0.5, prevScale + change)));
   };
 
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      onPageChange(currentPage + 1);
+  useEffect(() => {
+    const pageElement = document.getElementById(`page_container_${currentPage}`);
+    if (pageElement) {
+      pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  };
+  }, [currentPage]);  
 
   return (
-    <div className="h-full flex flex-col bg-gray-100">
-      {/* PDF Controls */}
-      <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handlePrevPage}
-            disabled={currentPage <= 1}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          
-          <span className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
-          </span>
-          
-          <button
-            onClick={handleNextPage}
-            disabled={currentPage >= totalPages}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handleZoomOut}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
-          >
-            <ZoomOut className="w-4 h-4" />
-          </button>
-          
-          <span className="text-sm text-gray-600 min-w-[4rem] text-center">
-            {zoom}%
-          </span>
-          
-          <button
-            onClick={handleZoomIn}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
-          
-          <div className="w-px h-6 bg-gray-300 mx-2" />
-          
-          <button
-            onClick={handleRotate}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
-          >
-            <RotateCw className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* PDF Content */}
-      <div className="flex-1 overflow-auto p-6 bg-gray-50">
-        <div className="flex justify-center">
-          <div 
-            className="bg-white shadow-lg rounded-lg overflow-hidden transition-transform duration-200"
-            style={{ 
-              transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-              transformOrigin: 'center top'
-            }}
-          >
-            {/* Mock PDF Page */}
-            <div className="w-[600px] h-[800px] bg-white border border-gray-300 p-8 text-gray-800">
-              <div className="mb-6">
-                <h1 className="text-2xl font-bold mb-4">Document Title</h1>
-                <p className="text-sm text-gray-600">Page {currentPage}</p>
-              </div>
-              
-              <div className="space-y-4 text-sm leading-relaxed">
-                <p>
-                  This is a mock PDF viewer showing page {currentPage} of the document "{file.name}". 
-                  In a real implementation, this would render the actual PDF content using a library like PDF.js.
-                </p>
-                
-                <p>
-                  The viewer supports zooming, rotation, and page navigation. When citations are clicked 
-                  in the chat interface, the viewer will automatically jump to the referenced page and 
-                  highlight the relevant section.
-                </p>
-                
-                <div className="bg-yellow-100 border-l-4 border-yellow-400 p-4 my-6">
-                  <p className="text-yellow-800">
-                    <strong>Highlighted Section:</strong> This represents content that would be highlighted 
-                    when referenced by a citation from the chat interface.
-                  </p>
-                </div>
-                
-                <p>
-                  The PDF viewer is fully responsive and provides an intuitive interface for document navigation 
-                  and interaction. Users can easily move between pages, adjust zoom levels for better readability, 
-                  and rotate pages as needed.
-                </p>
-              </div>
-            </div>
+    // PDF Viewer
+    file && Document && Page ? (
+      <div
+        className="overflow-y-scroll bg-gray-100 relative h-full flex-1"
+        style={{ width: `${100 - chatWidth}%` }}
+        ref={pdfViewerRef}
+      >
+        {/* PDF Controls */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4 flex items-center justify-between shadow-sm flex-shrink-0">
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => navigateToPage(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronUp className="w-4 h-4" />
+            </button>
+            <span className="text-sm font-medium text-gray-700 px-3 py-1 bg-gray-100 rounded-lg min-w-[100px] text-center">
+              Page {currentPage} of {numPages || '...'}
+            </span>
+            <button
+              onClick={() => navigateToPage(currentPage + 1)}
+              disabled={currentPage >= numPages}
+              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronDown className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex items-center space-x-3">
+            {/* Zoom controls */}
+            <button
+              onClick={() => handleZoom(-0.1)}
+              className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              -
+            </button>
+            <span className="text-sm text-gray-600 min-w-[60px] text-center px-2 py-1 bg-gray-100 rounded-lg">
+              {Math.round(scale * 100)}%
+            </span>
+            <button
+              onClick={() => handleZoom(0.1)}
+              className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              +
+            </button>
           </div>
         </div>
+
+        {/* PDF Document */}
+        <div className="flex justify-center items-start p-6">
+          <Document file={file} onLoadSuccess={onDocumentLoadSuccess}>
+            {Array.from(new Array(numPages), (el, index) => (
+              <div
+                key={`page_container_${index + 1}`}
+                id={`page_container_${index + 1}`}
+                className="mb-6"
+              >
+                <Page
+                  pageNumber={index + 1}
+                  scale={scale}
+                  className="shadow-lg border border-gray-200 rounded-lg overflow-hidden"
+                  loading={
+                    <div className="flex items-center justify-center p-12 text-gray-500 bg-white rounded-lg border border-gray-200">
+                      <div className="text-center">
+                        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                        <p>Loading page {index + 1}...</p>
+                      </div>
+                    </div>
+                  }
+                />
+              </div>
+            ))}
+          </Document>
+        </div>
       </div>
-    </div>
+    ) : file ? (
+      <div className="flex flex-1 items-center justify-center" style={{ width: `${100 - chatWidth}%` }}>
+        <div className="text-center text-gray-500">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p>Initializing PDF viewer...</p>
+        </div>
+      </div>
+    ) : null
   );
 };
 

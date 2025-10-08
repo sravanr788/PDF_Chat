@@ -22,7 +22,6 @@ app.use(express.urlencoded({ extended: true }));
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-
 app.get("/", (req, res) => {
   res.json({
     message: "PDF Chat Server is running!",
@@ -31,24 +30,34 @@ app.get("/", (req, res) => {
   });
 });
 
-// Fetch remote PDF file and extract text
+/**
+ * Fetches a remote PDF file and extracts its text content.
+ * @param {string} url - The URL of the PDF file.
+ * @returns {Promise<string>} The extracted text content.
+ */
 async function fetchPdfText(url) {
-  const response = await axios.get(url, { responseType: "arraybuffer" });
-  const dataBuffer = Buffer.from(response.data);
+  try {
+    const response = await axios.get(url, { responseType: "arraybuffer" });
+    const dataBuffer = Buffer.from(response.data);
 
-  const data = await pdfExtract(dataBuffer);
-  console.log("PDF Extract Result:", Object.keys(data));
+    const data = await pdfExtract(dataBuffer);
+    console.log("PDF Extract Result:", Object.keys(data));
 
-  let text = "";
-  if (data.text) {
-    text = data.text;
-  } else if (data.pages) {
-    text = data.pages.map(p => p.text).join(" ");
-  } else {
-    throw new Error("No text found in PDF");
+    let text = "";
+    // Prioritize 'text' field, fallback to joining page texts
+    if (data.text) {
+      text = data.text;
+    } else if (data.pages) {
+      text = data.pages.map(p => p.text).join(" ");
+    } else {
+      throw new Error("No text found in PDF");
+    }
+
+    return text;
+  } catch (error) {
+    console.error("Error fetching or extracting PDF:", error.message);
+    throw new Error("Could not process PDF file.");
   }
-
-  return text;
 }
 
 app.post("/chat", async (req, res) => {
@@ -74,34 +83,36 @@ app.post("/chat", async (req, res) => {
     }
 
     const prompt = `
-You are an AI assistant that answers questions based on the provided PDF.
+You are an AI assistant that answers questions STRICTLY based on the provided PDF content.
 
-IMPORTANT: Always cite in [Page X] format.
+1. Use Markdown formatting (e.g., **bold**, lists, headers) for clear readability.
+2. IMPORTANT: Always cite the source page(s) using the exact format [Page X] immediately following the piece of information derived from that page.
+3. If the answer is not in the document, state clearly that you cannot find the information in the provided PDF.
 
-PDF Content:
+--- PDF Content (First ~6000 characters) ---
 ${pdfPages.map(p => `\n--- PAGE ${p.pageNumber} ---\n${p.text}`).join("\n").slice(0, 6000)}
 
+--- Question ---
 Question: ${question}
 `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-001',
-      contents: 'Why is the sky blue?',
+      model: 'gemini-2.5-flash', 
+      contents: prompt,
     });
+    
     const answer = response.text;
-    console.log(answer);
+    console.log("AI Answer Generated.");
+    
     res.json({
       answer,
       totalPages: pdfPages.length
     });
   } catch (err) {
-    console.error("Error chatting with PDF:", err);
-    res.status(500).json({ error: "Failed to chat with PDF" });
+    console.error("Error chatting with PDF:", err.message);
+    res.status(500).json({ error: err.message || "Failed to chat with PDF" });
   }
 });
-
-
-
 if (process.env.NODE_ENV !== "production") {
   app.listen(3000, () => console.log("Server running on http://localhost:3000"));
 }

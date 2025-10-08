@@ -12,19 +12,19 @@ const FileUploadView = ({ onFileReady }) => {
   const onFileChange = async (event) => {
     const selectedFile = event.target.files?.[0];
     setError(null);
-    
+
     if (!selectedFile) return;
-    
+
     if (selectedFile.type !== "application/pdf") {
       setError("Please select a PDF file only.");
       return;
     }
-    
+
     if (selectedFile.size > 50 * 1024 * 1024) { // 50MB limit
       setError("File size must be less than 50MB.");
       return;
     }
-    
+
     setFile(selectedFile);
     await uploadToServer(selectedFile);
   };
@@ -33,30 +33,30 @@ const FileUploadView = ({ onFileReady }) => {
     event.preventDefault();
     setDragActive(false);
     setError(null);
-    
+
     const droppedFile = event.dataTransfer.files[0];
-    
+
     if (!droppedFile) return;
-    
+
     if (droppedFile.type !== "application/pdf") {
       setError("Please drop a PDF file only.");
       return;
     }
-    
+
     if (droppedFile.size > 50 * 1024 * 1024) { // 50MB limit
       setError("File size must be less than 50MB.");
       return;
     }
-    
+
     setFile(droppedFile);
     await uploadToServer(droppedFile);
   };
-  
+
   const onDragOver = (event) => {
     event.preventDefault();
     setDragActive(true);
   };
-  
+
   const onDragLeave = (event) => {
     event.preventDefault();
     setDragActive(false);
@@ -69,7 +69,7 @@ const FileUploadView = ({ onFileReady }) => {
     try {
       setIsLoading(true);
       setUploadProgress(0);
-      
+
       // Simulate progress during upload
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
@@ -85,10 +85,10 @@ const FileUploadView = ({ onFileReady }) => {
         method: "POST",
         body: formData,
       });
-      
+
       clearInterval(progressInterval);
       setUploadProgress(100);
-      
+
       const data = await res.json();
       if (data.success) {
         setTimeout(() => {
@@ -117,15 +117,14 @@ const FileUploadView = ({ onFileReady }) => {
             </h1>
           </div>
         </div>
-        
+
         <div
-          className={`relative w-full h-80 flex items-center justify-center border-2 border-dashed rounded-2xl cursor-pointer transition-all duration-300 ${
-            dragActive 
-              ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-purple-50 scale-105 shadow-xl' 
-              : error 
-                ? 'border-red-300 bg-red-50 hover:border-red-400 shadow-lg' 
+          className={`relative w-full h-80 flex items-center justify-center border-2 border-dashed rounded-2xl cursor-pointer transition-all duration-300 ${dragActive
+              ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-purple-50 scale-105 shadow-xl'
+              : error
+                ? 'border-red-300 bg-red-50 hover:border-red-400 shadow-lg'
                 : 'border-gray-300 bg-white hover:border-blue-400 hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 shadow-lg hover:shadow-xl'
-          }`}
+            }`}
           onDrop={onDrop}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
@@ -178,9 +177,9 @@ const FileUploadView = ({ onFileReady }) => {
                     <span className="text-sm font-medium text-blue-600">{Math.round(uploadProgress)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                    <div 
-                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300 ease-out shadow-sm" 
-                      style={{width: `${uploadProgress}%`}}
+                    <div
+                      className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300 ease-out shadow-sm"
+                      style={{ width: `${uploadProgress}%` }}
                     ></div>
                   </div>
                   {uploadProgress === 100 && (
@@ -201,14 +200,14 @@ const FileUploadView = ({ onFileReady }) => {
             className="hidden"
           />
         </div>
-        
+
         {error && (
           <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center shadow-sm">
             <AlertCircle className="w-5 h-5 text-red-500 mr-3 flex-shrink-0" />
             <p className="text-red-700 font-medium">{error}</p>
           </div>
         )}
-        
+
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500 mb-2">
             Your documents are processed securely with end-to-end encryption
